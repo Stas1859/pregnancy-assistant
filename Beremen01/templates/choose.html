@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Дата беременности</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    body.loaded {
+      opacity: 1;
+    }
+
+    .container {
+      max-width: 420px;
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #333;
+      margin-bottom: 28px;
+    }
+
+    .method-btn {
+      background: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .method-btn:active {
+      transform: scale(0.97);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 320px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .modal-content p {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .modal input[type="date"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-width: 240px;
+      box-sizing: border-box;
+      margin: 8px 0;
+    }
+
+    .modal .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .modal .btn-row button {
+      padding: 10px 16px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .ok {
+      background: #2aabee;
+      color: white;
+    }
+
+    .cancel {
+      background: #eee;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <!-- сразу после <body> -->
+  <script>
+    (function () {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user?.id) {
+        sessionStorage.setItem("tg_user_id", tg.initDataUnsafe.user.id.toString());
+        sessionStorage.setItem("dev_mode", "false");
+      } else {
+        // Режим разработки
+        sessionStorage.setItem("tg_user_id", "test_user_12345");
+        sessionStorage.setItem("dev_mode", "true");
+        console.log("🔧 Режим разработки: используется тестовый пользователь");
+      }
+    })();
+  </script>
+  <div class="container">
+    <h1>Укажем дату начала беременности</h1>
+
+    <div class="method-btn" onclick="openModal('lmp')">📅 По дате последних месячных</div>
+    <div class="method-btn" onclick="openModal('due')">🎯 По предполагаемой дате родов</div>
+    <div class="method-btn" onclick="openModal('conception')">❤️ По дате зачатия</div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <p id="modal-text">Выберите дату:</p>
+      <input type="date" id="dateInput" />
+      <div class="btn-row">
+        <button class="ok" onclick="saveDate()">Готово</button>
+        <button class="cancel" onclick="closeModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentMethod = "";
+
+    function openModal(method) {
+      currentMethod = method;
+      const texts = {
+        lmp: "Дата последних месячных:",
+        due: "Предполагаемая дата родов:",
+        conception: "Дата зачатия:"
+      };
+      document.getElementById("modal-text").innerText = texts[method];
+      document.getElementById("modal").classList.add("show");
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.remove("show");
+    }
+
+    document.getElementById("modal").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("modal")) closeModal();
+    });
+
+    function saveDate() {
+        const dateStr = document.getElementById("dateInput").value;
+        if (!dateStr) return;
+        
+        const today = new Date();
+        let startDate;
+        
+        if (currentMethod === 'lmp') {
+            // По дате последних месячных - начало беременности через 2 недели
+            startDate = new Date(dateStr);
+            startDate.setDate(startDate.getDate() + 14);
+        } else if (currentMethod === 'due') {
+            // По дате родов - начало беременности за 40 недель
+            startDate = new Date(dateStr);
+            startDate.setDate(startDate.getDate() - 280); // 40 недель * 7 дней
+        } else if (currentMethod === 'conception') {
+            // По дате зачатия - начало беременности через 2 недели
+            startDate = new Date(dateStr);
+            startDate.setDate(startDate.getDate() + 14);
+        }
+        
+        const diff = today - startDate;
+        const weeks = Math.floor(diff / (7 * 24 * 60 * 60 * 1000));
+        // 🚀 Save start_date and weeks to the database
+        const userId = sessionStorage.getItem("tg_user_id");
+        if (userId) {
+            fetch("/save_weeks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    user_id: userId,
+                    start_date: startDate.toISOString().slice(0, 10),  // format YYYY-MM-DD
+                    weeks: weeks 
+                })
+            }).then(() => {
+                window.location.href = "/main";  // after saving to DB, go to main page
+            });
+        } else {
+            window.location.href = "/main";
+        }
+    }
+
+    // ⏳ Просто отображаем страницу
+    window.addEventListener("load", () => {
+      document.body.classList.add("loaded");
+    });
+  </script>
+      </body>
+      </html>

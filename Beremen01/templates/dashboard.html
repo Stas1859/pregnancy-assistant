@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Главная</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2 {
+      font-size: 20px;
+      margin: 24px 0 12px;
+      text-align: center;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .summary-item {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .summary-item.normal {
+      border-left: 6px solid #4caf50;
+    }
+    .summary-item.warning {
+      border-left: 6px solid #ffc107;
+    }
+    .summary-title {
+      font-size: 14px;
+      color: #777;
+    }
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .carousel-section {
+      margin-bottom: 24px;
+    }
+    .carousel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .carousel-header h3 {
+      font-size: 16px;
+      margin: 0;
+    }
+    .carousel-header button {
+      font-size: 20px;
+      background: none;
+      border: none;
+      color: #2aabee;
+      cursor: pointer;
+    }
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+    }
+    .carousel-item {
+      min-width: 120px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      font-size: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .carousel-item img {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    .disclaimer {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+<script>
+  function goBack() {
+    window.location.href = "/main";
+  }
+</script>
+
+<div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+  <button onclick="goBack()" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+    ← Назад
+  </button>
+  <h2 style="margin: 0 auto;">Главная</h2>
+</div>
+
+<div class="summary-grid">
+  <div class="summary-item normal">
+    <div class="summary-title">Вес</div>
+    <div class="summary-value">66.4 кг</div>
+  </div>
+  <div class="summary-item warning">
+    <div class="summary-title">Давление</div>
+    <div class="summary-value">145/95</div>
+  </div>
+  <div class="summary-item normal">
+    <div class="summary-title">Глюкоза</div>
+    <div class="summary-value">4.9</div>
+  </div>
+  <div class="summary-item normal">
+    <div class="summary-title">Настроение</div>
+    <div class="summary-value">😊</div>
+  </div>
+</div>
+
+<div class="carousel-section">
+  <div class="carousel-header">
+    <h3>Анализы</h3>
+    <button onclick="alert('Загрузка файла')">＋</button>
+  </div>
+  <div class="carousel">
+    <div class="carousel-item"><img src="https://placekitten.com/200/200" /><div>ОАК.pdf</div></div>
+    <div class="carousel-item"><img src="https://placekitten.com/200/201" /><div>Глюкоза.jpg</div></div>
+  </div>
+</div>
+
+<div class="carousel-section">
+  <div class="carousel-header">
+    <h3>Файлы</h3>
+    <button onclick="alert('Добавить файл')">＋</button>
+  </div>
+  <div class="carousel">
+    <div class="carousel-item"><img src="https://placekitten.com/200/202" /><div>УЗИ 12 нед</div></div>
+    <div class="carousel-item"><img src="https://placekitten.com/200/203" /><div>Справка</div></div>
+  </div>
+</div>
+
+<div class="carousel-section">
+  <div class="carousel-header">
+    <h3>Заметки</h3>
+    <button onclick="alert('Добавить заметку')">＋</button>
+  </div>
+  <div class="carousel">
+    <div class="carousel-item">Сегодня ощущаю себя бодро. Вечером немного усталость.</div>
+    <div class="carousel-item">Была на приёме у врача. Всё в порядке. Вес стабильный.</div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  ⚠️ Информация носит справочный характер. Для интерпретации данных обратитесь к врачу.
+</div>
+
+</body>
+</html>

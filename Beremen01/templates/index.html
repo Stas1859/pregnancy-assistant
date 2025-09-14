@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Главный экран</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      box-sizing: border-box;
+      position: relative;
+      height: calc(100vh - env(safe-area-inset-bottom) - 60px);
+      overflow-y: auto;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .container.loaded {
+      opacity: 1;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .profile-avatar,
+    .info-btn {
+      width: 44px;
+      height: 44px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .week-block {
+      flex: 1;
+      text-align: center;
+      margin: 0 8px;
+    }
+
+    .current-date {
+      font-size: 14px;
+      font-weight: 400;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .week-scroll {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 4px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .day-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .day-item .day {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .day-item .num {
+      font-size: 16px;
+    }
+    .num.today {
+      background-color: #fff;
+      color: #333;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .arrow {
+      font-size: 20px;
+      color: #aaa;
+      padding: 0 4px;
+      user-select: none;
+    }
+
+    .image-wrapper {
+      background: #fff;
+      border-radius: 100%;
+      width: 210px;
+      height: 210px;
+      margin: 16px auto 24px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease;
+      position: relative;
+    }
+
+    .image-wrapper:active {
+      transform: scale(0.96);
+      position: relative;
+    }
+
+    .main-image {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+    }
+
+    .info-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 0 0 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      font-size: 15px;
+      line-height: 1.5;
+      text-align: left;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .info-line {
+      margin-bottom: 8px;
+      color: #444;
+      padding-left: 10px;
+    }
+
+    .more-link-fixed {
+      position: absolute;
+      bottom: 6px;
+      right: 12px;
+      font-size: 18px;
+      color: #2aabee;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .state-block {
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .mood {
+      position: relative;
+      width: calc(45% - 8px);
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    .mood-title {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .mood-emojis {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 0;
+    }
+
+    .mood-emojis span {
+      font-size: 44px; /* Было 40px — увеличено на ~10% */
+      opacity: 0.4;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+      .mood-emojis {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 0;
+      }
+
+      .mood-emojis span {
+        font-size: 44px;
+        opacity: 0.4;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+    .mood-emojis span:nth-child(3) {
+      right: 0;
+      top: 0;
+    }
+
+    .mood-emojis span.selected {
+      opacity: 1;
+    }
+
+    .vitals {
+      width: calc(49% - 8px);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .circle {
+      background: #fff;
+      border-radius: 100%;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      cursor: pointer;
+    }
+
+    .week-badge {
+      margin: -110px 0 12px 0px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .week-circle {
+      background: #fff;
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      color: #333;
+    }
+
+    .week-label {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #777;
+      text-align: center;
+      width: 52px; /* ⬅️ точно под кругом */
+    }
+    
+    .bottom-bar {
+      position: fixed;
+      bottom: env(safe-area-inset-bottom, 0);
+      left: 0;
+      right: 0;
+      background: #fff;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
+      z-index: 100;
+    }
+
+    .bar-btn {
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .bar-btn.big {
+      font-size: 34px;
+      line-height: 1;
+    }
+    .more-dots {
+      background-color: #e0f0ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .more-dots .dot {
+      width: 4px;
+      height: 4px;
+      background-color: #2aabee;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .corner-dots {
+      position: absolute;
+      top: 14px;
+      right: 13px;
+      display: flex;
+      gap: 4px;
+      z-index: 2;
+      transform: scale(0.6); 
+      transform-origin: top right; 
+    }
+
+    .corner-dots .dot {
+      width: 4px;
+      height: 4px;
+      background-color: #2aabee;
+      border-radius: 50%;
+    }
+
+    .tracking-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tracking-card {
+      width: 48%;
+      background: #fff;
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      font-size: 15px;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-height: 56px;
+      text-align: center;
+    }
+
+    .tracking-card .icon {
+      position: absolute;
+      left: 12px;
+      font-size: 20px;
+    }
+
+    .tracking-card .label {
+      flex: 1;
+      text-align: center;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #ddd;
+      position: absolute;
+      right: 12px;
+    }
+
+    .status-indicator.filled-blue {
+      background-color: #2aabee;
+    }
+
+    .status-indicator.filled-red {
+      background-color: #ff4d4f;
+    }
+
+    .status-indicator.filled-white {
+      background-color: #fff;
+      border: 1px solid #ccc;
+    }
+    .image-nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .image-arrow {
+      width: 44px;
+      height: 44px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #555;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .image-arrow:active {
+      transform: scale(0.9);
+      background: #f0f0f0;
+    }
+
+    .tracking-card:active {
+      transform: scale(0.97);
+      transition: transform 0.1s ease;
+    }
+
+    .dev-mode-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #ff6b6b;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="dev-mode-indicator" id="devIndicator" style="display: none;">DEV</div>
+  <div class="container" id="mainContainer">
+    <!-- 🔼 ВЕРХНИЙ РЯД -->
+    <div class="top-row">
+      <div class="profile-avatar">👩</div>
+      <div class="week-block">
+        <div class="current-date" id="currentDate">–</div>
+        <div class="week-scroll" id="weekDays">
+          <span class="arrow">←</span>
+          <!-- дни добавляются JS -->
+          <span class="arrow">→</span>
+        </div>
+      </div>
+      <div class="info-btn">🗓️</div>
+    </div>
+
+    <!-- 🔄 ЦЕНТРАЛЬНАЯ КАРТИНКА -->
+    <div class="image-nav-container">
+      <div class="image-arrow left-arrow">←</div>
+
+      <div class="image-wrapper" id="fruitTrigger">
+        <img src="/static/img/early.png" alt="Плод" class="main-image" />
+      </div>
+
+      <div class="image-arrow right-arrow">→</div>
+    </div>
+
+    <!-- 📅 КРУЖОК С НОМЕРОМ НЕДЕЛИ — ВНЕ image-wrapper -->
+    <div class="week-badge">
+      <div class="circle week-circle" id="weekNumberCircle">–</div>
+      <div class="week-label">неделя</div>
+    </div>
+
+    <!-- 📦 ИНФОРМАЦИЯ О ПЛОДЕ -->
+    <div class="info-box">
+      <div class="info-line">🫐 Плод размером с <strong>черничку</strong></div>
+      <div class="info-line">📏 В длину он достигает <strong>7,3 мм</strong></div>
+      <div class="info-line">❤️ Формируется сердце и кровеносная система</div>
+      <div class="more-link-fixed">…</div>
+    </div>
+
+    <!-- 😊 НАСТРОЕНИЕ И ИНДИКАТОРЫ -->
+    <div class="tracking-grid">
+        <div class="tracking-card" id="weightBtn" data-type="weight">
+        <span class="icon">⚖️</span>
+        <span class="label">Вес</span>
+        <span class="status-indicator" id="weight-indicator"></span>
+      </div>
+        <div class="tracking-card" id="pressureBtn" data-type="pressure">
+        <span class="icon">💓</span>
+        <span class="label">Давление</span>
+        <span class="status-indicator" id="pressure-indicator"></span>
+      </div>
+      <div class="tracking-card" id="moodBtn" data-type="wellbeing">
+        <span class="icon">😊</span>
+        <span class="label">Самочувствие</span>
+        <span class="status-indicator" id="wellbeing-indicator"></span>
+      </div>
+      <div class="tracking-card" data-type="more">
+        <span class="label">Ещё</span>
+        <span class="status-indicator" id="more-indicator"></span>
+      </div>
+    </div>
+
+  <!-- 🔽 НИЖНЯЯ ПАНЕЛЬ -->
+  <div class="bottom-bar">
+    <div class="bar-btn">🏠</div>
+    <div class="bar-btn big">➕</div>
+    <div class="bar-btn">💬</div>
+  </div>
+
+    <!-- After: index.html (always fetching week from DB) -->
+    <script>
+        window.addEventListener("load", () => {
+            document.getElementById("mainContainer").classList.add("loaded");
+            
+            // Показываем индикатор режима разработки
+            const devMode = sessionStorage.getItem("dev_mode") === "true";
+            if (devMode) {
+                document.getElementById("devIndicator").style.display = "block";
+            }
+            
+            // ... other code ...
+
+            document.getElementById("weekNumberCircle").addEventListener("click", () => {
+                window.location.href = "/choose";
+            });
+
+            const weekCircle = document.getElementById("weekNumberCircle");
+            const userId = sessionStorage.getItem("tg_user_id");
+            const devMode = sessionStorage.getItem("dev_mode") === "true";
+            
+            if (userId && weekCircle) {
+                // Always load current week from the database
+                fetch(`/load_user_data?user_id=${userId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.weeks !== undefined && data.weeks !== null) {
+                            weekCircle.textContent = data.weeks;
+                        }
+                        
+                        // Обновляем индикаторы статуса
+                        if (data.status) {
+                            updateStatusFromData(data.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Ошибка загрузки данных:", error);
+                    });
+        }
+            document.getElementById("weightBtn").addEventListener("click", () => {
+              window.location.href = "/weight";
+            });
+            document.getElementById("pressureBtn").addEventListener("click", () => {
+              window.location.href = "/pressure";
+            });
+
+            document.getElementById("moodBtn").addEventListener("click", () => {
+              window.location.href = "/mood";
+            });
+            document.querySelector('[data-type="more"]').addEventListener("click", () => {
+              window.location.href = "/monitoring";
+            });
+
+        const now = new Date();
+        const monthNames = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+        document.getElementById("currentDate").innerText = monthNames[now.getMonth()];
+        const start = new Date(now);
+        const day = now.getDay() === 0 ? 7 : now.getDay(); // воскресенье = 7
+        start.setDate(start.getDate() - day + 1);
+        const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+        const weekHTML = days.map((d, i) => {
+          const day = new Date(start);
+          day.setDate(start.getDate() + i);
+          return `
+            <div class="day-item">
+              <div class="day">${d}</div>
+              <div class="num ${day.getDate() === now.getDate() ? 'today' : ''}">${day.getDate()}</div>
+            </div>
+          `;
+        }).join("");
+        document.getElementById("weekDays").innerHTML = weekHTML;
+
+      document.getElementById("fruitTrigger").addEventListener("click", (e) => {
+        const emojis = ["🍓", "🍌", "🍒", "🍉", "🍇", "🥝"];
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        const clickX = e.clientX;
+        const clickY = e.clientY;
+
+        for (let i = 0; i < 12; i++) {
+          const el = document.createElement("div");
+          el.textContent = emoji;
+          el.style.position = "fixed";
+          el.style.left = `${clickX}px`;
+          el.style.top = `${clickY}px`;
+          el.style.fontSize = "20px";
+          el.style.zIndex = 999;
+          el.style.transition = "transform 1s ease-out, opacity 1s";
+          document.body.appendChild(el);
+
+          const angle = Math.random() * Math.PI * 2;
+          const distance = 100 + Math.random() * 30;
+          const x = Math.cos(angle) * distance;
+          const y = Math.sin(angle) * distance;
+
+          requestAnimationFrame(() => {
+            el.style.transform = `translate(${x}px, ${-y}px) rotate(${Math.random() * 360}deg)`;
+            el.style.opacity = 0;
+          });
+
+          setTimeout(() => el.remove(), 1000);
+        }
+      });
+
+      document.querySelectorAll(".mood-emojis .emoji").forEach(emoji => {
+        emoji.addEventListener("click", () => {
+          document.querySelectorAll(".mood-emojis .emoji").forEach(e => e.classList.remove("selected"));
+          emoji.classList.add("selected");
+        });
+      });
+    });
+
+    function updateStatusIndicators() {
+      const today = new Date().toISOString().slice(0, 10);
+
+      const weightDate = sessionStorage.getItem("weight_date");
+      const pressureDate = sessionStorage.getItem("pressure_date");
+      const wellbeingDate = sessionStorage.getItem("wellbeing_date");
+
+      setIndicator("weight-indicator", weightDate);
+      setIndicator("pressure-indicator", pressureDate);
+      setIndicator("wellbeing-indicator", wellbeingDate);
+    }
+
+    function setIndicator(id, date) {
+      const el = document.getElementById(id);
+      const today = new Date().toISOString().slice(0, 10);
+
+      if (!el) return;
+
+      if (date === today) {
+        el.className = "status-indicator filled-blue"; // ✅ заполнено
+      } else {
+        el.className = "status-indicator filled-red";  // ❗нужно заполнить
+      }
+    }
+    function updateStatusIndicators() {
+      const today = new Date().toISOString().slice(0, 10);
+
+      setIndicator("weight-indicator", sessionStorage.getItem("weight_date"));
+      setIndicator("pressure-indicator", sessionStorage.getItem("pressure_date"));
+      setIndicator("wellbeing-indicator", sessionStorage.getItem("wellbeing_date"));
+      setIndicator("more-indicator", sessionStorage.getItem("more_date")); // если нужно
+    }
+
+    function updateStatusFromData(statusData) {
+      // Обновляем индикаторы на основе данных с сервера
+      setIndicatorFromData("weight-indicator", statusData.weight_today);
+      setIndicatorFromData("pressure-indicator", statusData.pressure_today);
+      setIndicatorFromData("wellbeing-indicator", statusData.mood_today);
+    }
+
+    function setIndicatorFromData(id, hasData) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      if (hasData) {
+        el.className = "status-indicator filled-blue"; // ✅ заполнено
+      } else {
+        el.className = "status-indicator filled-red";  // ❗нужно заполнить
+      }
+    }
+
+    // Вызов при загрузке
+    updateStatusIndicators();
+    </script>
+</body>
+</html

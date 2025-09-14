@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Самочувствие и настроение</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .info-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: 20px;
+      margin-top: 24px;
+    }
+    .emoji-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: 36px;
+      margin-top: 12px;
+    }
+    .emoji {
+      cursor: pointer;
+      opacity: 0.5;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .emoji.selected {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    #moodChart {
+      max-width: 100%;
+      margin-bottom: 20px;
+    }
+    canvas.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+    <button onclick="window.location.href='/main'" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+      ← Назад
+    </button>
+    <h2 style="margin: 0 auto; text-align: center;">Самочувствие</h2>
+  </div>
+
+  <div class="info-block">
+    <p>Каждый день отслеживайте своё <strong>настроение</strong> и <strong>самочувствие</strong> — это поможет замечать важные изменения и делиться наблюдениями с врачом.</p>
+  </div>
+
+  <div class="info-block" id="moodBlock">
+    <p><strong>Настроение</strong></p>
+    <div class="emoji-row" id="moodOptions">
+      <span class="emoji" data-value="1">😞</span>
+      <span class="emoji" data-value="2">😐</span>
+      <span class="emoji" data-value="3">😊</span>
+    </div>
+  </div>
+
+  <div class="info-block" id="wellbeingBlock">
+    <p><strong>Самочувствие</strong></p>
+    <div class="emoji-row" id="wellbeingOptions">
+      <span class="emoji" data-value="1">🤒</span>
+      <span class="emoji" data-value="2">😌</span>
+      <span class="emoji" data-value="3">💪</span>
+    </div>
+  </div>
+
+  <canvas id="moodChart" class="hidden"></canvas>
+
+  <h2>Зачем отслеживать самочувствие</h2>
+  <div class="info-block">
+
+    <p><strong>🧠 Что происходит с психикой во время беременности?</strong></p>
+    <p>Беременность — время не только перемен в теле, но и настоящего эмоционального водоворота. Меняется гормональный фон, появляются новые страхи, переживания, а иногда и ощущение, что всё «через край». И это нормально.</p>
+    <p>Даже у самых спокойных женщин может быть:</p>
+    <ul>
+      <li>раздражительность, перепады настроения;</li>
+      <li>повышенная тревожность (особенно в первом и третьем триместрах);</li>
+      <li>бессонница;</li>
+      <li>иногда — апатия или слезливость без причины.</li>
+    </ul>
+    <p><strong>📌 Важно:</strong> всё это не говорит о том, что «что-то не так». Просто психика адаптируется к новой роли и ответственности. Особенно чувствительны женщины с токсикозом, осложнениями или двойней.</p>
+
+    <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
+
+    <p><strong>❤️ Почему важно следить за самочувствием?</strong></p>
+    <p>Если тревожность или грусть затягиваются, это может:</p>
+    <ul>
+      <li>ухудшить физическое состояние (например, повысить давление или усилить токсикоз);</li>
+      <li>повлиять на развитие малыша — стресс влияет на гормональный фон и общее состояние;</li>
+      <li>помешать маме выстроить эмоциональную связь с ребёнком после рождения.</li>
+    </ul>
+    <p>Но самое главное — мама сама чувствует себя хуже. Устаёт, труднее отдыхает и восстанавливается.</p>
+
+    <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
+
+    <p><strong>🔧 Что можно делать?</strong></p>
+    <p>Авторы статьи подчёркивают: психоэмоциональное состояние — важнейший показатель благополучия беременной, и за ним можно бережно следить.</p>
+    <p>Помогает:</p>
+    <ul>
+      <li>поддержка партнёра и семьи;</li>
+      <li>психологическая консультация;</li>
+      <li>прогулки, йога, тёплое общение;</li>
+      <li>режим сна и отдыха;</li>
+      <li>по показаниям — лёгкая медикаментозная помощь (только с врачом).</li>
+    </ul>
+
+    <p><strong>📲 Почему важно отслеживать настроение и самочувствие?</strong></p>
+    <p>Каждая короткая отметка (например, смайлик) — это способ не потерять себя в рутине, заметить, если что-то тревожит, и поделиться этим с врачом. Это забота, а не слабость.</p>
+
+    <p><strong>💚 Беременность — не тест на силу воли.</strong><br>
+    Следить за своим настроением и самочувствием — это взрослый и заботливый шаг. Для себя и для малыша.</p>
+
+    <p style="font-size: 13px; color: #777; margin-top: 16px;">
+      📝 <a href="https://www.rmj.ru/articles/nevrologiya/Psihoemocionalynye_rasstroystva__pri_beremennosti__Neobhodimosty_ih_korrekcii/?utm_source=chatgpt.com" target="_blank" rel="noopener noreferrer">
+        Источник: Российский медицинский журнал (rmj.ru)
+      </a>
+    </p>
+
+  </div>
+
+  <script>
+    const userId = sessionStorage.getItem("tg_user_id");
+    const date = new Date().toISOString().slice(0, 10);
+    const moodOptions = document.querySelectorAll("#moodOptions .emoji");
+    const wellOptions = document.querySelectorAll("#wellbeingOptions .emoji");
+    const chartCanvas = document.getElementById("moodChart");
+
+    let chartInstance = null;
+
+    function sendMoodData(mood, wellbeing) {
+      fetch("/save_mood", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, date, mood, wellbeing })
+      }).then(() => {
+        sessionStorage.setItem("wellbeing_date", date);
+        chartCanvas.classList.remove("hidden");  // Появление графика сразу после ввода
+        loadChart();
+      });
+    }
+
+    function selectEmoji(group, value) {
+      group.forEach(e => e.classList.remove("selected"));
+      const selected = [...group].find(e => e.dataset.value == value);
+      if (selected) selected.classList.add("selected");
+    }
+
+    function setupEmojiBlock(group, key) {
+      group.forEach(el => {
+        el.addEventListener("click", () => {
+          const value = el.dataset.value;
+          sessionStorage.setItem(key, value);
+          selectEmoji(group, value);
+
+          const mood = sessionStorage.getItem("mood") || null;
+          const wellbeing = sessionStorage.getItem("wellbeing") || null;
+
+          if (mood && wellbeing) {
+            sendMoodData(parseInt(mood), parseInt(wellbeing));
+          }
+        });
+      });
+    }
+
+    setupEmojiBlock(moodOptions, "mood");
+    setupEmojiBlock(wellOptions, "wellbeing");
+
+    function loadChart() {
+      fetch(`/load_mood_data?user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          fetch(`/load_user_data?user_id=${userId}`)
+            .then(res => res.json())
+            .then(userData => {
+              const entries = data.entries || [];
+
+              const startDate = userData.start_date || (userData.weights?.[0]?.[1]);
+              if (!startDate) return;
+
+              // Добавим точку "по умолчанию" на дату начала беременности
+              const labels = [startDate, ...entries.map(row => row[0])];
+              const moodData = [2, ...entries.map(row => row[1])];
+              const wellData = [2, ...entries.map(row => row[2])];
+
+              chartCanvas.classList.remove("hidden");
+
+              if (chartInstance) {
+                chartInstance.destroy(); // удаляем старый график перед созданием нового
+              }
+
+              chartInstance = new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                  labels,
+                  datasets: [
+                    {
+                      label: 'Настроение',
+                      data: moodData,
+                      borderWidth: 2,
+                      tension: 0.3
+                    },
+                    {
+                      label: 'Самочувствие',
+                      data: wellData,
+                      borderWidth: 2,
+                      tension: 0.3
+                    }
+                  ]
+                },
+                options: {
+                  responsive: true,
+                  plugins: { legend: { position: 'top' } },
+                  scales: {
+                    y: {
+                      suggestedMin: 0,
+                      suggestedMax: 3,
+                      ticks: {
+                        callback: function(value) {
+                          return value === 1 ? "😞" : value === 2 ? "😐" : value === 3 ? "😊" : value;
+                        }
+                      }
+                    }
+                  }
+                }
+              });
+            });
+        });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadChart();
+
+      const mood = sessionStorage.getItem("mood");
+      const well = sessionStorage.getItem("wellbeing");
+      if (mood) selectEmoji(moodOptions, mood);
+      if (well) selectEmoji(wellOptions, well);
+    });
+  </script>
+  <div class="disclaimer" style="font-size: 12px; color: #999; text-align: center; margin-top: 32px;">
+    ⚠️ Информация не является медицинской рекомендацией. Обратитесь к врачу.
+  </div>
+</body>
+</html>

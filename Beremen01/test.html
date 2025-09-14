@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест приложения</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест приложения для беременных</h1>
+    
+    <div class="test-section">
+        <h2>📱 Проверка Telegram Web App</h2>
+        <div id="telegram-status" class="status info">Проверяем...</div>
+        <button onclick="checkTelegram()">Проверить Telegram</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Режим разработки</h2>
+        <div id="dev-status" class="status info">Проверяем...</div>
+        <button onclick="checkDevMode()">Проверить режим разработки</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Тест API</h2>
+        <div id="api-status" class="status info">Готов к тестированию</div>
+        <button onclick="testAPI()">Тестировать API</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Переход к приложению</h2>
+        <p>Если все тесты прошли успешно, можете перейти к основному приложению:</p>
+        <button onclick="window.open('http://localhost:8080', '_blank')">Открыть приложение</button>
+    </div>
+
+    <script>
+        function checkTelegram() {
+            const status = document.getElementById('telegram-status');
+            
+            try {
+                const tg = window.Telegram?.WebApp;
+                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    status.className = 'status success';
+                    status.innerHTML = `✅ Telegram Web App обнаружен<br>
+                        ID: ${tg.initDataUnsafe.user.id}<br>
+                        Username: ${tg.initDataUnsafe.user.username || 'не указан'}`;
+                } else {
+                    status.className = 'status error';
+                    status.innerHTML = '❌ Telegram Web App не обнаружен - будет использован режим разработки';
+                }
+            } catch (e) {
+                status.className = 'status error';
+                status.innerHTML = `❌ Ошибка: ${e.message}`;
+            }
+        }
+
+        function checkDevMode() {
+            const status = document.getElementById('dev-status');
+            
+            try {
+                const tg = window.Telegram?.WebApp;
+                const user = tg?.initDataUnsafe?.user;
+                
+                if (!user?.id) {
+                    status.className = 'status success';
+                    status.innerHTML = '✅ Режим разработки активирован<br>Будет использован тестовый пользователь: test_user_12345';
+                } else {
+                    status.className = 'status info';
+                    status.innerHTML = 'ℹ️ Режим Telegram активирован<br>Используется реальный пользователь';
+                }
+            } catch (e) {
+                status.className = 'status error';
+                status.innerHTML = `❌ Ошибка: ${e.message}`;
+            }
+        }
+
+        async function testAPI() {
+            const status = document.getElementById('api-status');
+            status.className = 'status info';
+            status.innerHTML = '🔄 Тестируем API...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/debug_all');
+                if (response.ok) {
+                    const data = await response.json();
+                    status.className = 'status success';
+                    status.innerHTML = `✅ API работает корректно<br>
+                        Найдено таблиц: ${Object.keys(data).length}<br>
+                        Пользователей: ${data.users ? data.users.length : 0}`;
+                } else {
+                    status.className = 'status error';
+                    status.innerHTML = `❌ API недоступен: ${response.status}`;
+                }
+            } catch (e) {
+                status.className = 'status error';
+                status.innerHTML = `❌ Ошибка подключения: ${e.message}`;
+            }
+        }
+
+        // Автоматически запускаем проверки при загрузке
+        window.addEventListener('load', () => {
+            checkTelegram();
+            checkDevMode();
+            testAPI();
+        });
+    </script>
+</body>
+</html>

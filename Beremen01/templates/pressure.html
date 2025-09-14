@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Давление</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2 {
+      margin-top: 24px;
+      font-size: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .info-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .pressure-inputs {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .pressure-inputs input {
+      width: 80px;
+      font-size: 24px;
+      padding: 6px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    .submit-btn {
+      margin-top: 12px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .edit-btn {
+      font-size: 16px;
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+    <button onclick="goBack()" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+      ← Назад
+    </button>
+    <h2 style="margin: 0 auto; text-align: center;">Давление</h2>
+  </div>
+
+  <!-- Блок: знаете ли нормальное давление -->
+  <div class="info-block" id="questionBlock">
+    <p>Вы знаете своё нормальное давление до беременности?</p>
+    <button class="submit-btn" onclick="answerNormalPressure(true)">Да</button>
+    <button class="submit-btn" onclick="answerNormalPressure(false)">Нет</button>
+  </div>
+
+  <!-- Блок: ввод нормального давления -->
+  <div class="info-block hidden" id="normalPressureBlock">
+    <p>Введите ваше нормальное давление</p>
+    <div class="pressure-inputs">
+      <input type="number" id="normalSys" placeholder="Верхн." min="80" max="200" />
+      <input type="number" id="normalDia" placeholder="Ниж." min="50" max="130" />
+    </div>
+    <button class="submit-btn" onclick="submitNormalPressure()">Сохранить</button>
+  </div>
+
+  <!-- Блок: отображение нормального давления -->
+  <div class="info-block hidden" id="normalDisplayBlock">
+    <p>
+      🧾 Нормальное давление: <strong id="normalDisplayText"></strong>
+      <button class="edit-btn" onclick="editNormalPressure()">✏️</button>
+    </p>
+  </div>
+
+  <!-- Блок: ежедневный ввод давления -->
+  <div class="info-block hidden" id="todayBlock">
+    <p id="todayLabel">Введите ваше давление сегодня</p>
+    <div class="pressure-inputs">
+      <input type="number" id="todaySys" placeholder="Верхн." min="80" max="200" />
+      <input type="number" id="todayDia" placeholder="Ниж." min="50" max="130" />
+    </div>
+    <button class="submit-btn" onclick="submitTodayPressure()">Внести</button>
+  </div>
+
+  <!-- Блок: анализ -->
+  <div class="info-block hidden" id="statusBlock">
+    <p id="pressureStatus">—</p>
+  </div>
+
+  <!-- График -->
+  <canvas id="pressureChart" class="hidden" style="max-width: 100%; margin-bottom: 20px;"></canvas>
+
+  <!-- Статья -->
+  <h2>О давлении при беременности</h2>
+  <div class="info-block">
+    <p><strong>🫀 Почему давление так важно во время беременности?</strong></p>
+    <p>Во время беременности в организме женщины увеличивается объём крови и появляется дополнительный круг кровообращения — плацентарный. Это естественные изменения, но они могут повлиять на артериальное давление.</p>
+    <p><strong>💡 Что считается нормой?</strong><br>
+    Лучше всего, если давление остаётся таким же, каким было до беременности. Обычно допустимы отклонения <strong>не более чем на 10%</strong> от обычного уровня.</p>
+
+    <p><strong>🔺 Если давление повышено</strong></p>
+    <p><u>Факторы риска:</u></p>
+    <ul>
+      <li>нестабильное давление до беременности;</li>
+      <li>избыточный вес;</li>
+      <li>осложнения в прошлых беременностях;</li>
+      <li>гормональные сбои;</li>
+      <li>заболевания почек.</li>
+    </ul>
+    <p><u>Симптомы:</u> головная боль, шум в ушах, приливы жара, ухудшение зрения, но иногда — вообще без симптомов. Поэтому <strong>регулярное измерение — лучший способ контроля</strong>.</p>
+    <p><em>Если проблемы до 20 недель — возможно, гипертония. После — следите на предмет гестоза (преэклампсии).</em></p>
+
+    <p><strong>🔻 Если давление понижено</strong></p>
+    <p>На ранних сроках может возникнуть слабость, головокружение, звон в ушах, обмороки. Это тоже важно отслеживать — при сильной гипотонии ребёнку может не хватать кислорода.</p>
+
+    <p><strong>🧘‍♀️ Как поддержать норму?</strong></p>
+    <ul>
+      <li>следить за давлением ежедневно;</li>
+      <li>больше гулять и отдыхать;</li>
+      <li>питаться сбалансированно (меньше соли);</li>
+      <li>бросить вредные привычки;</li>
+      <li>регулярно общаться с врачом.</li>
+    </ul>
+
+    <p><strong>📌 Главное:</strong> давление можно контролировать — и это уже важный шаг к здоровой беременности 💙</p>
+
+    <p style="font-size: 13px; color: #777;">📝 <a href="https://minzdrav.med04.ru/about/info/news/8963/?utm_source=chatgpt.com" target="_blank" rel="noopener noreferrer">Источник: Минздрав Республики Калмыкия</a></p>
+  </div>
+
+  <script>
+    const questionBlock = document.getElementById("questionBlock");
+    const normalPressureBlock = document.getElementById("normalPressureBlock");
+    const normalDisplayBlock = document.getElementById("normalDisplayBlock");
+    const todayBlock = document.getElementById("todayBlock");
+    const statusBlock = document.getElementById("statusBlock");
+    const chartCanvas = document.getElementById("pressureChart");
+    const normalDisplayText = document.getElementById("normalDisplayText");
+    const pressureStatus = document.getElementById("pressureStatus");
+
+    function answerNormalPressure(know) {
+      questionBlock.classList.add("hidden");
+      if (know) {
+        normalPressureBlock.classList.remove("hidden");
+      } else {
+        alert("Хорошо! В будущем можно будет ввести нормальное давление вручную.");
+      }
+    }
+
+    const userId = sessionStorage.getItem("tg_user_id");
+
+    function submitNormalPressure() {
+      const sys = parseInt(document.getElementById("normalSys").value);
+      const dia = parseInt(document.getElementById("normalDia").value);
+      if (!sys || !dia) return alert("Введите оба значения давления");
+
+      localStorage.setItem("normal_sys", sys);
+      localStorage.setItem("normal_dia", dia);
+      fetch("/save_normal_pressure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, systolic: sys, diastolic: dia })
+      });
+      normalPressureBlock.classList.add("hidden");
+
+      renderNormalDisplay(sys, dia);
+      todayBlock.classList.remove("hidden");
+    }
+
+    function renderNormalDisplay(sys, dia) {
+      normalDisplayText.textContent = `${sys}/${dia}`;
+      normalDisplayBlock.classList.remove("hidden");
+    }
+
+    function editNormalPressure() {
+      normalPressureBlock.classList.remove("hidden");
+    }
+
+    function goBack() {
+      window.location.href = "/main";
+    }
+
+    function submitTodayPressure() {
+      const sys = parseInt(document.getElementById("todaySys").value);
+      const dia = parseInt(document.getElementById("todayDia").value);
+      if (!sys || !dia) return alert("Введите оба значения");
+
+      const normSys = parseInt(localStorage.getItem("normal_sys"));
+      const normDia = parseInt(localStorage.getItem("normal_dia"));
+
+      const date = new Date().toISOString().slice(0, 10);
+      localStorage.setItem("pressure_date", date);
+      localStorage.setItem("today_sys", sys);
+      localStorage.setItem("today_dia", dia);
+
+      fetch("/save_pressure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, systolic: sys, diastolic: dia, date })
+      });
+
+      // Проверка по диапазону
+      if (sys < 90 || dia < 60) {
+        pressureStatus.textContent = "🔻 Низкое давление, проконсультируйтесь с врачом.";
+        localStorage.setItem("pressure_status_text", pressureStatus.textContent);
+      } else if (sys > 140 || dia > 90) {
+        pressureStatus.textContent = "🔺 Высокое давление, проконсультируйтесь с врачом.";
+        localStorage.setItem("pressure_status_text", pressureStatus.textContent);
+      } else {
+        const sysDiff = (sys - normSys) / normSys;
+        const diaDiff = (dia - normDia) / normDia;
+
+        if (Math.abs(sysDiff) < 0.1 && Math.abs(diaDiff) < 0.1) {
+          pressureStatus.textContent = "✅ Давление в норме!";
+        } else if (sysDiff > 0.1 || diaDiff > 0.1) {
+          pressureStatus.textContent = "ℹ️ Давление немного выше нормы.";
+        } else if (sysDiff < -0.1 || diaDiff < -0.1) {
+          pressureStatus.textContent = "ℹ️ Давление немного ниже нормы.";
+        } else {
+          pressureStatus.textContent = "ℹ️ Давление отличается от нормы.";
+        }
+
+        localStorage.setItem("pressure_status_text", pressureStatus.textContent);
+      }
+
+      statusBlock.classList.remove("hidden");
+      chartCanvas.classList.remove("hidden");
+      localStorage.setItem("pressure_date", date);
+      localStorage.setItem("pressure_chart_shown", "1");
+      loadAndRenderChart();
+
+      // Тут вызовешь `renderChart()` с реальными данными
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const sys = localStorage.getItem("normal_sys");
+      const dia = localStorage.getItem("normal_dia");
+      const userId = sessionStorage.getItem("tg_user_id");
+
+      if (!sys || !dia) return;
+
+      questionBlock.classList.add("hidden");
+      renderNormalDisplay(sys, dia);
+      todayBlock.classList.remove("hidden");
+
+      // 🔥 [НОВОЕ] Загружаем последнее давление из базы данных
+      try {
+        const res = await fetch(`/load_pressure_data?user_id=${userId}`);
+        const data = await res.json();
+        if (data.entries && data.entries.length > 0) {
+          const [lastDate, lastSys, lastDia] = data.entries[data.entries.length - 1];
+
+          const today = new Date().toISOString().slice(0, 10);
+          const sysInput = document.getElementById("todaySys");
+          const diaInput = document.getElementById("todayDia");
+          const btn = document.querySelector("#todayBlock .submit-btn");
+
+          // 🔥 [ИЗМЕНЁННЫЙ УСЛОВНЫЙ БЛОК]
+          if (lastDate === today) {
+            sysInput.value = lastSys;
+            diaInput.value = lastDia;
+            btn.textContent = "Изменить";
+          } else {
+            sysInput.value = "";
+            diaInput.value = "";
+            btn.textContent = "Внести";
+          }
+
+          // 🔥 [НОВОЕ] Отображение статуса давления
+          const savedStatus = localStorage.getItem("pressure_status_text");
+          pressureStatus.textContent = (lastDate === today && savedStatus)
+            ? savedStatus
+            : getStatusTextByLastDate(lastDate);
+          statusBlock.classList.remove("hidden");
+
+          // 🔥 [НОВОЕ] График
+          chartCanvas.classList.remove("hidden");
+          localStorage.setItem("pressure_chart_shown", "1");
+          loadAndRenderChart();
+        }
+      } catch (e) {
+        console.warn("Ошибка загрузки давления из базы", e);
+      }
+    });
+
+    function loadAndRenderChart() {
+      fetch(`/load_pressure_data?user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.entries || data.entries.length < 1) return;
+
+          const normSys = parseInt(localStorage.getItem("normal_sys"));
+          const normDia = parseInt(localStorage.getItem("normal_dia"));
+
+          const userId = sessionStorage.getItem("tg_user_id");
+
+          // Получаем дату начала беременности
+          fetch(`/load_user_data?user_id=${userId}`)
+            .then(res => res.json())
+            .then(userData => {
+              const startDate = userData.start_date || userData.weights?.[0]?.[1]; // если есть вес, берём дату первого веса
+
+              const labels = [startDate, ...data.entries.map(row => row[0])];
+              const systolicData = [normSys, ...data.entries.map(row => row[1])];
+              const diastolicData = [normDia, ...data.entries.map(row => row[2])];
+
+    new Chart(chartCanvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Верхнее',
+            data: systolicData,
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Нижнее',
+            data: diastolicData,
+            borderWidth: 2,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            suggestedMin: 60,
+            suggestedMax: 160
+          }
+        }
+      }
+    });
+    });
+    });
+    }
+  </script>
+  <div class="disclaimer" style="font-size: 12px; color: #999; text-align: center; margin-top: 32px;">
+    ⚠️ Информация не является медицинской рекомендацией. Обратитесь к врачу.
+  </div>
+</body>
+</html>

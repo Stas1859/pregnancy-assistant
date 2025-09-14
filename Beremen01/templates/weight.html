@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Вес</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Подключаем Telegram-SDK и кладём ID пользователя в sessionStorage -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    h2 {
+      margin-top: 24px;
+      font-size: 20px;
+    }
+
+    .weight-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .date {
+      text-align: left;
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .weight-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .weight-btn {
+      font-size: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #e0f0ff;
+      color: #2aabee;
+      cursor: pointer;
+    }
+
+    .weight-input {
+      font-size: 32px;
+      width: 120px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .weight-input.placeholder {
+      opacity: 0.5;
+    }
+
+    .submit-btn {
+      margin-top: 12px;
+      background: #2aabee;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .info-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+    <script>
+      (function () {
+        const tg = window.Telegram?.WebApp;
+        if (tg?.initDataUnsafe?.user?.id) {
+          sessionStorage.setItem("tg_user_id", tg.initDataUnsafe.user.id.toString());
+          sessionStorage.setItem("dev_mode", "false");
+        } else {
+          // Режим разработки
+          sessionStorage.setItem("tg_user_id", "test_user_12345");
+          sessionStorage.setItem("dev_mode", "true");
+          console.log("🔧 Режим разработки: используется тестовый пользователь");
+        }
+      })();
+    </script>
+  <div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+    <button onclick="goBack()" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+      ← Назад
+    </button>
+    <h2 style="margin: 0 auto; text-align: center;">Вес</h2>
+  </div> 
+  <div class="weight-block">
+    <div class="date" id="weightDateLabel">Введите изначальный вес:</div>
+    <div class="weight-controls">
+      <button class="weight-btn" onclick="adjustWeight(-0.1)">−</button>
+      <input
+        id="weightInput"
+        class="weight-input placeholder"
+        type="text"
+        inputmode="decimal"
+        placeholder="–"
+        oninput="onWeightEdit(this)"
+      />
+      <button class="weight-btn" onclick="adjustWeight(+0.1)">+</button>
+    </div>
+    <button class="submit-btn" onclick="submitWeight()">Внести</button>
+  </div>
+
+  <div class="info-block" id="heightBlock">
+    <div id="heightDisplay">
+      <button class="submit-btn" onclick="showHeightInput()">📏 Введите свой рост, это уточнит расчёты</button>
+    </div>
+
+    <div id="heightInputBlock" style="display: none; margin-top: 10px;">
+      <input
+        id="heightInput"
+        type="number"
+        min="100"
+        max="250"
+        placeholder="Ваш рост в см"
+        style="padding: 8px; font-size: 16px; width: 100%; max-width: 200px;"
+      />
+      <button class="submit-btn" onclick="submitHeight()">Сохранить</button>
+    </div>
+  </div>
+
+  <div id="statsWrapper" style="display: none;">
+    <h2>Статистика</h2>
+    <div class="info-block" id="statsBlock">
+      <div id="gainLine">📈 Средняя прибавка: <strong>–</strong></div>
+      <div id="normLine">–</div>
+    </div>
+    <canvas id="weightChart" style="max-width: 100%; margin-bottom: 20px;"></canvas>
+  </div>
+
+  <h2>О наборе веса при беременности</h2>
+  <div class="info-block">
+    <p><strong>🍼 Как меняется вес при беременности: честно, понятно и по неделям</strong></p>
+
+    <p>Вес — один из самых важных показателей для беременной. Он не только отражает, как чувствует себя будущая мама, но и даёт врачу понять, как развивается малыш. Но что считать нормой? Почему одна прибавила 4 кг, а другая — 10? Разбираемся.</p>
+
+    <p><strong>🧠 Почему вообще растёт вес?</strong><br>
+    К весу прибавляются:
+    <ul>
+      <li>Плацента (0.5–0.7 кг)</li>
+      <li>Кровь (до 1.5 кг)</li>
+      <li>Околоплодные воды (0.8–1.5 кг)</li>
+      <li>Молочные железы (+0.5–1 кг)</li>
+      <li>Жировые запасы (2–4 кг)</li>
+      <li>Ребёнок (3–4 кг)</li>
+    </ul>
+    📦 Итого: 10–15 кг — это нормально.
+    </p>
+
+    <p><strong>🧮 Сколько набирать — по неделям?</strong></p>
+    <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #f0f0f0;">
+          <th style="padding: 4px; border: 1px solid #ccc;">ИМТ</th>
+          <th style="padding: 4px; border: 1px solid #ccc;">Общая прибавка</th>
+          <th style="padding: 4px; border: 1px solid #ccc;">В неделю</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 4px; border: 1px solid #ccc;">Дефицит (&lt;18.5)</td><td style="padding: 4px;">12.5–18 кг</td><td style="padding: 4px;">0.5–0.6 кг</td></tr>
+        <tr><td style="padding: 4px; border: 1px solid #ccc;">Норма (18.5–24.9)</td><td style="padding: 4px;">11.5–16 кг</td><td style="padding: 4px;">0.4–0.5 кг</td></tr>
+        <tr><td style="padding: 4px; border: 1px solid #ccc;">Избыток (25–29.9)</td><td style="padding: 4px;">7–11.5 кг</td><td style="padding: 4px;">0.2–0.3 кг</td></tr>
+        <tr><td style="padding: 4px; border: 1px solid #ccc;">Ожирение (&gt;30)</td><td style="padding: 4px;">5–9 кг</td><td style="padding: 4px;">0.1–0.2 кг</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>📈 Что делать, если вес скачет?</strong><br>
+    Быстро набирается? — Может быть жидкость. Проверь давление и анализ мочи.<br>
+    Плохо набирается? — Может быть токсикоз или просто такая физиология. Главное — поговорить с врачом.
+    </p>
+
+    <p><strong>🥗 Что влияет на вес?</strong><br>
+    Гормоны, генетика, двойня, стресс, еда, сон — всё это важно. Но ты не виновата, если вес скачет. Просто наблюдай.
+    </p>
+
+    <p><strong>🚫 Не делай вот этого</strong><br>
+    ❌ Не садись на диету<br>
+    ❌ Не сравнивай себя с другими<br>
+    ❌ Не гонись за «нормой» — ты и есть норма
+    </p>
+
+    <p><strong>💡 Советы:</strong>
+      <ul>
+        <li>Взвешивайся утром, натощак</li>
+        <li>Следи за резкими скачками (больше 2 кг за неделю)</li>
+        <li>Вес — это не оценка. Это просто один из показателей</li>
+      </ul>
+    </p>
+
+    <p><em>🗒️ Оригинальная статья:</em> <a href="https://gemotest.ru/info/spravochnik/telo-cheloveka/nabor-vesa-pri-beremennosti/?utm_source=chatgpt.com" target="_blank" rel="noopener noreferrer">Оригинальная статья</a></p>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Информация не является медицинской рекомендацией. Обратитесь к врачу.
+  </div>
+
+  <script>
+    let isInitial = true;
+    let currentWeight = null;
+    let weeksPregnant = 0;
+    let lastEnteredDate = null;   // ← добавили переменную-хранилище даты
+
+    const inputEl = document.getElementById("weightInput");
+    const labelEl = document.getElementById("weightDateLabel");
+    const submitBtn = document.querySelector(".submit-btn");
+    let successLabel;
+
+    function formatDate(date = new Date()) {
+      return date.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function onWeightEdit(input) {
+      input.classList.remove("placeholder");
+    }
+
+    function goBack() {
+      window.location.href = "/main";
+    }
+
+    function adjustWeight(delta) {
+      let val = parseFloat(inputEl.value.replace(",", "."));
+      if (isNaN(val)) val = 0;
+      val = Math.round((val + delta) * 10) / 10;
+      inputEl.value = val.toFixed(1);
+      inputEl.classList.remove("placeholder");
+    }
+
+    function insertHelperText(text) {
+      const oldHelper = document.getElementById("weight-helper");
+      if (oldHelper) oldHelper.remove();
+
+      const helper = document.createElement("div");
+      helper.id = "weight-helper";
+      helper.textContent = text;
+      helper.style.fontSize = "14px";
+      helper.style.color = "#888";
+      helper.style.marginTop = "12px";
+      helper.style.textAlign = "left";
+
+      document.querySelector(".weight-block").appendChild(helper);
+    }
+
+    function removeHelperText() {
+      const oldHelper = document.getElementById("weight-helper");
+      if (oldHelper) oldHelper.remove();
+    }
+
+    function showSuccessLabel(text) {
+      if (successLabel) successLabel.remove();
+
+      successLabel = document.createElement("div");
+      successLabel.textContent = text;
+      successLabel.style.fontSize = "14px";
+      successLabel.style.color = "#888";
+      successLabel.style.marginTop = "8px";
+      successLabel.style.textAlign = "center";
+
+      submitBtn.insertAdjacentElement("afterend", successLabel);
+
+      setTimeout(() => {
+        if (successLabel) successLabel.remove();
+      }, 2000);
+    }
+
+    function showHeightInput() {
+      document.getElementById("heightInputBlock").style.display = "block";
+    }
+
+    /* ▼ ВСТАВИТЬ СЮДА */
+    function renderHeightDisplay(height) {
+      const block = document.getElementById("heightDisplay");
+      block.innerHTML = `
+        <div>
+          📏 Рост: <strong>${height} см</strong>
+          <button class="submit-btn" onclick="showHeightInput()">✏️</button>
+        </div>`;
+      document.getElementById("heightInputBlock").style.display = "none";
+    }
+
+    /* After: weight.html (submitHeight without localStorage) */
+    async function submitHeight() {
+        const height = parseInt(document.getElementById("heightInput").value);
+        const userId = sessionStorage.getItem("tg_user_id");
+
+        if (!height || height < 100 || height > 250) {
+            alert("Введите рост от 100 до 250 см");
+            return;
+        }
+
+        try {
+            await fetch("/save_height", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: userId, height })
+            });
+            // Immediately update the UI with the new height from input
+            renderHeightDisplay(height);
+        } catch (e) {
+            console.warn("Ошибка при сохранении роста", e);
+        }
+    }
+
+    /* After: weight.html (submitWeight saving all data to DB) */
+    function submitWeight() {
+        const value = parseFloat(inputEl.value.replace(",", "."));
+        if (isNaN(value)) {
+            alert("Введите корректный вес");
+            return;
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+
+              if (isInitial) {
+              if (weeksPregnant >= 10) {
+                  /* 1️⃣  Сохраняем ПЕРВЫЙ (изначальный) вес в БД — NEW */
+                  fetch("/save_weight", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          user_id: sessionStorage.getItem("tg_user_id"),
+                          weight: value,
+                          date: today                // фиксируем сегодняшнюю дату
+                      })
+                  }).then(() => {
+                      showSuccessLabel("Вес сохранён");        // NEW
+                      insertHelperText("Теперь введите свой текущий вес");
+                  });
+
+                  isInitial = false;                           // NEW – больше не «первый запуск»
+                  submitBtn.textContent = "Изменить";
+                  if (!isInitial) removeHelperText();
+            } else {
+                // Save initial weight to DB even if < 10 weeks
+                fetch("/save_weight", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        user_id: sessionStorage.getItem("tg_user_id"),
+                        weight: value,
+                        date: today
+                    })
+                });
+                showSuccessLabel("Вес сохранён");
+                sessionStorage.setItem("weight_date", today);   // 👈 ДОБАВИТЬ
+                submitBtn.textContent = "Изменить";
+                isInitial = false;
+            }
+        } else {
+            // Save new weight entry to DB
+            fetch("/save_weight", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: sessionStorage.getItem("tg_user_id"),
+                    weight: value,
+                    date: today
+                })
+            }).then(() => {
+                // Reload data to update stats and chart
+                fetch(`/load_user_data?user_id=${sessionStorage.getItem("tg_user_id")}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const weeks = data.weeks || 0;
+                        showWeightStats(data, weeks);
+                    });
+            });
+            showSuccessLabel("Текущий вес сохранён");
+            sessionStorage.setItem("weight_date", today);   // 👈 ДОБАВИТЬ
+            submitBtn.textContent = "Изменить";
+            removeHelperText();
+        }
+
+        labelEl.textContent = "Сегодня: " + formatDate();
+        inputEl.classList.remove("placeholder");
+        inputEl.value = value.toFixed(1);
+    }
+
+    function showWeightStats(data, weeksPregnant) {
+      const gainEl = document.getElementById("gainLine");
+      const normEl = document.getElementById("normLine");
+
+      if (!data.weights || data.weights.length < 2) {
+        document.getElementById("statsWrapper").style.display = "none";
+        return;
+      } else {
+        document.getElementById("statsWrapper").style.display = "block";
+      }
+
+      const [startWeight, startDate] = data.weights[0];
+      const [lastWeight, lastDate] = data.weights[data.weights.length - 1];
+
+      const kgGain = (lastWeight - startWeight).toFixed(1);
+      gainEl.innerHTML = `📈 Всего добавилось: <strong>${kgGain} кг</strong>`;
+
+    if (weeksPregnant < 10) {
+      normEl.innerHTML = `ℹ️ До 10 недель вес может колебаться — это нормально.`;
+    } else if (data.norm_info) {
+      const min = data.norm_info.min_kg;
+      const max = data.norm_info.max_kg;
+
+      if (kgGain < min) {
+        normEl.innerHTML = `🔔 Возможно, вес немного ниже нормы, советуем проконсуьтироваться с врачом (< ${min} кг)`;
+      } else if (kgGain > max) {
+        normEl.innerHTML = `🔔 Возможно, вес немного выше нормы, советуем проконсуьтироваться с врачом (> ${max} кг)`;
+      } else {
+        normEl.innerHTML = `✅ Ваш вес в пределах нормы, продолжайте наблюдения (${min}–${max} кг)`;
+      }
+      } else {
+        normEl.innerHTML = `—`;
+      }
+      if (data.weights && data.weights.length >= 2) {
+        renderWeightChart(data.weights);
+      }
+    }
+
+    let chartInstance = null;
+
+    function renderWeightChart(weights) {
+      const ctx = document.getElementById('weightChart').getContext('2d');
+
+      const labels = weights.map(entry => {
+        const date = new Date(entry[1]);
+        return date.toLocaleDateString("ru-RU", { day: '2-digit', month: 'short' });
+      });
+
+      const values = weights.map(entry => entry[0]);
+
+      if (chartInstance) {
+        chartInstance.destroy(); // перерисовываем заново
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Вес (кг)',
+            data: values,
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 3,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
+    }
+
+    /* After: weight.html (using fetched data directly, no localStorage caching) */
+    window.addEventListener("DOMContentLoaded", async () => {
+        const today = new Date().toISOString().slice(0, 10);
+        const userId = sessionStorage.getItem("tg_user_id");
+        try {
+            const res = await fetch(`/load_user_data?user_id=${userId}`);
+            const data = await res.json();
+
+            // Set weeksPregnant from data (or 0 if not available)
+            weeksPregnant = data.weeks || 0;
+
+            // Display user’s height if already saved
+            if (data.height) {
+                renderHeightDisplay(data.height);
+            }
+
+            // If an initial weight was recorded in DB, mark as not initial
+            if (data.start_weight) {
+                isInitial = false;
+            }
+
+            // If there are any weight entries, get the latest entry
+            if (data.weights && data.weights.length > 0) {
+                const lastEntry = data.weights[data.weights.length - 1];
+                const lastWeight = lastEntry[0];
+                const lastDate = lastEntry[1];
+                currentWeight = lastWeight;
+              lastEnteredDate = lastDate;       // стало — просто присваиваем уже созданной
+            }
+
+            showWeightStats(data, weeksPregnant);
+        } catch (e) {
+            console.warn("Ошибка загрузки данных пользователя", e);
+        }
+
+        if (weeksPregnant < 10) {
+            // For pregnancies under 10 weeks, skip separate initial weight step
+            isInitial = false;
+            labelEl.textContent = "Сегодня: " + formatDate();
+            if (currentWeight !== null) {
+                inputEl.value = currentWeight.toFixed(1);
+                inputEl.classList.remove("placeholder");
+                submitBtn.textContent = "Изменить";
+            } else {
+                inputEl.placeholder = "–";
+                inputEl.value = "";
+                inputEl.classList.add("placeholder");
+            }
+            insertHelperText("До 10 недель вес практически не меняется.");
+        } else if (isInitial) {
+            // Prompt for initial weight if not provided yet (>= 10 weeks)
+            labelEl.textContent = "Введите изначальный вес:";
+            insertHelperText("Для корректного наблюдения укажите ваш вес до беременности.");
+            inputEl.placeholder = "–";
+            inputEl.value = "";
+            inputEl.classList.add("placeholder");
+        } else {
+            labelEl.textContent = "Сегодня: " + formatDate();
+            if (currentWeight !== null) {
+                inputEl.value = currentWeight.toFixed(1);
+                inputEl.classList.remove("placeholder");
+            }
+            // If the last recorded weight entry isn't from today, prompt for today's weight
+            if (!lastEnteredDate || lastEnteredDate !== today) {
+                insertHelperText("Введите свой сегодняшний вес");
+            }
+        }
+    });
+  </script>
+</body>
+</html>

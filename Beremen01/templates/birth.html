@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ваш возраст</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    body.loaded {
+      opacity: 1;
+    }
+
+    .emoji {
+      font-size: 64px;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    h1 {
+      font-size: 20px;
+      text-align: center;
+      margin: 0 20px 30px;
+      color: #333;
+      opacity: 0;
+      animation: fadeIn 0.6s ease forwards 0.3s;
+    }
+
+    select {
+      font-size: 18px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      background: #fff;
+      margin-bottom: 30px;
+      appearance: none;
+      text-align: center;
+    }
+
+    .skip-btn {
+      font-size: 14px;
+      color: #777;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="emoji">🎂</div>
+  <h1>Укажите год вашего рождения,<br />чтобы прогнозы стали точнее</h1>
+
+  <select id="yearSelect" size="5" onchange="saveYear()"></select>
+
+  <button class="skip-btn" onclick="skip()">Пропустить</button>
+
+  <script>
+    function generateYears() {
+      const select = document.getElementById("yearSelect");
+      if (!select) return;
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 10; y >= 1950; y--) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.innerText = y;
+        select.appendChild(opt);
+      }
+    }
+
+    function saveYear() {
+      const year = document.getElementById("yearSelect").value;
+      sessionStorage.setItem("user_birth_year", year);
+      window.location.href = "/main";
+    }
+
+    function skip() {
+      window.location.href = "/main";
+    }
+
+    window.addEventListener("load", () => {
+      const hasStart = sessionStorage.getItem("pregnancy_start");
+      const hasYear = sessionStorage.getItem("user_birth_year");
+
+      if (!hasStart) {
+        window.location.href = "/choose";
+      } else if (hasStart && hasYear) {
+        window.location.href = "/main";
+      } else {
+        document.body.classList.add("loaded");
+        generateYears();
+      }
+    });
+  </script>
+</body>
+</html>

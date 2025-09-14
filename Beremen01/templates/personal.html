@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Личный кабинет</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2 {
+      font-size: 20px;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: #4f8fba;
+      cursor: pointer;
+      position: absolute;
+      left: 16px;
+      top: 16px;
+    }
+    .section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .section-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .edit-btn, .action-btn {
+      background: none;
+      border: none;
+      color: #4f8fba;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .action-btn.full {
+      background: #8a4b5c;
+      color: white;
+      padding: 10px 24px;
+      border-radius: 24px;
+      width: 100%;
+      font-size: 16px;
+      margin-top: 12px;
+    }
+    .visits {
+      max-height: 240px;
+      overflow: hidden;
+    }
+    .visit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 6px 0;
+    }
+    .visit-item label {
+      flex: 1;
+    }
+    .toggle-btn {
+      display: block;
+      margin: 10px auto 0;
+      background: none;
+      border: none;
+      color: #4f8fba;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="goBack()">← Назад</button>
+  <h2>Личный кабинет</h2>
+
+  <div class="section">
+    <div class="row">
+      <span><strong>Имя:</strong> Марина</span>
+      <button class="edit-btn">✏️ Редактировать</button>
+    </div>
+    <div class="row">
+      <span><strong>Дата беременности:</strong> 12 апреля</span>
+      <button class="edit-btn">✏️ Редактировать</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📅 Расписание визитов</div>
+    <div id="visitList" class="visits">
+      <div class="visit-item"><label><input type="checkbox" /> Первый визит (8–12 недель)</label></div>
+      <div class="visit-item"><label><input type="checkbox" /> Второй визит (20–22 недели)</label></div>
+      <div class="visit-item"><label><input type="checkbox" /> Третий визит (30–32 недели)</label></div>
+      <div class="visit-item"><label><input type="checkbox" /> Четвёртый визит (36–38 недель)</label></div>
+      <div class="visit-item extra" style="display: none;"><label><input type="checkbox" /> УЗИ 1 (11–13 недель)</label></div>
+      <div class="visit-item extra" style="display: none;"><label><input type="checkbox" /> УЗИ 2 (18–21 неделя)</label></div>
+      <div class="visit-item extra" style="display: none;"><label><input type="checkbox" /> УЗИ 3 (30–34 недели)</label></div>
+      <div class="visit-item extra" style="display: none;"><label><input type="checkbox" /> CTG (после 32 недель)</label></div>
+    </div>
+    <button class="toggle-btn" onclick="toggleExtra()">Показать ещё</button>
+  </div>
+
+  <div class="section">
+    <div class="row"><button class="action-btn">🗑️ Удалить все данные</button></div>
+    <div class="row"><button class="action-btn">📁 Выгрузить и удалить профиль</button></div>
+    <div class="row"><button class="action-btn">💬 Поддержка</button></div>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = "/main";
+    }
+
+    function toggleExtra() {
+      const extras = document.querySelectorAll(".visit-item.extra");
+      const btn = document.querySelector(".toggle-btn");
+      const hidden = [...extras].some(el => el.style.display === "none");
+
+      extras.forEach(el => el.style.display = hidden ? "flex" : "none");
+      btn.textContent = hidden ? "Скрыть" : "Показать ещё";
+    }
+  </script>
+</body>
+</html>

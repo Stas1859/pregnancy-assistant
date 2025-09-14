@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Сахар</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    h2 {
+      margin-top: 24px;
+      font-size: 20px;
+    }
+
+    .info-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .sugar-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .sugar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .sugar-btn {
+      font-size: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #e0f0ff;
+      color: #2aabee;
+      cursor: pointer;
+    }
+
+    .sugar-input {
+      font-size: 32px;
+      width: 120px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .sugar-input.placeholder {
+      opacity: 0.5;
+    }
+
+    .submit-btn {
+      margin-top: 12px;
+      background: #2aabee;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+    <button onclick="goBack()" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+      ← Назад
+    </button>
+    <h2 style="margin: 0 auto; text-align: center;">Сахар</h2>
+  </div>
+
+  <div class="info-block" id="questionBlock">
+    <p>Есть ли у вас предрасположенность к диабету или проблемы с уровнем сахара?</p>
+    <button class="submit-btn" onclick="answerRisk(true)">Да</button>
+    <button class="submit-btn" onclick="answerRisk(false)">Нет</button>
+  </div>
+
+  <div id="recommendationBlock" class="info-block" style="display: none;"></div>
+
+  <div id="sugarInputBlock" class="sugar-block" style="display: none;">
+    <div class="date" id="sugarDateLabel">Введите уровень сахара (ммоль/л):</div>
+    <div class="sugar-controls">
+      <button class="sugar-btn" onclick="adjustSugar(-0.1)">−</button>
+      <input
+        id="sugarInput"
+        class="sugar-input placeholder"
+        type="text"
+        inputmode="decimal"
+        placeholder="–"
+        oninput="onSugarEdit(this)"
+      />
+      <button class="sugar-btn" onclick="adjustSugar(+0.1)">+</button>
+    </div>
+    <button class="submit-btn" onclick="submitSugar()">Внести</button>
+  </div>
+
+  <div id="statsWrapper" style="display: none;">
+    <h2>Статистика</h2>
+    <div class="info-block" id="statsBlock">
+      <div id="sugarStatus">—</div>
+    </div>
+    <canvas id="sugarChart" style="max-width: 100%; margin-bottom: 20px;"></canvas>
+  </div>
+    <h2>О контроле сахара при беременности</h2>
+    <div class="info-block">
+      <p><strong>🤰 Почему важно следить за сахаром?</strong></p>
+      <p>Даже если до беременности у вас не было проблем с уровнем глюкозы, гормональные изменения могут повлиять на его колебания. Это особенно важно после 24 недели, когда возрастает риск гестационного диабета.</p>
+
+      <p><strong>📊 Какие нормы?</strong></p>
+      <ul>
+        <li>Натощак: 3.3–5.1 ммоль/л</li>
+        <li>Через 1 час после еды: не более 7.0–7.8 ммоль/л</li>
+      </ul>
+
+      <p><strong>🔁 Как часто проверять?</strong><br>
+      Если предрасположенности нет — достаточно проверять 1 раз в 2–4 недели.<br>
+      Если есть факторы риска — 2–3 раза в неделю или по рекомендациям врача.</p>
+
+      <p><strong>📌 Как подготовиться к измерению?</strong><br>
+      Измеряйте сахар утром натощак или через 1 час после еды. Записывайте значения и отмечайте, если были резкие скачки или плохое самочувствие.</p>
+
+      <p><em>Источник: <a href="https://minzdrav.gov.ru/ministry/programms/detskoe-zdorove/gestatsionnyy-diabet" target="_blank" rel="noopener noreferrer">Минздрав РФ — Гестационный диабет</a></em></p>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ Информация не является медицинской рекомендацией. Обратитесь к врачу.
+    </div>
+
+    <script>
+      let hasRisk = null;
+      const inputEl = document.getElementById("sugarInput");
+      const statusEl = document.getElementById("sugarStatus");
+      const chartEl = document.getElementById("sugarChart").getContext("2d");
+      let chartInstance = null;
+
+      function goBack() {
+        window.location.href = "/main";
+      }
+
+      function answerRisk(risk) {
+        hasRisk = risk;
+        localStorage.setItem("sugar_risk", risk ? "1" : "0");
+
+        showQuestionAnsweredState();
+      }
+
+      function showQuestionAnsweredState() {
+        document.getElementById("questionBlock").style.display = "none";
+        document.getElementById("recommendationBlock").style.display = "block";
+        document.getElementById("sugarInputBlock").style.display = "block";
+
+        const riskStored = localStorage.getItem("sugar_risk") === "1";
+        document.getElementById("recommendationBlock").innerHTML = riskStored
+          ? "<p>🩺 Рекомендуется проверять сахар 2–3 раза в неделю или по рекомендации врача.</p>"
+          : "<p>🩺 Без предрасположенности достаточно проверять сахар 1 раз в 2–4 недели, особенно после 24 недели беременности.</p>";
+      }
+
+      function adjustSugar(delta) {
+        let val = parseFloat(inputEl.value.replace(",", "."));
+        if (isNaN(val)) val = 0;
+        val = Math.round((val + delta) * 10) / 10;
+        inputEl.value = val.toFixed(1);
+        inputEl.classList.remove("placeholder");
+      }
+
+      function onSugarEdit(input) {
+        input.classList.remove("placeholder");
+      }
+
+      function submitSugar() {
+        const value = parseFloat(inputEl.value.replace(",", "."));
+        if (isNaN(value)) {
+          alert("Введите корректное значение сахара");
+          return;
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem("sugar_date", today);
+        localStorage.setItem("sugar_value", value);
+
+        fetch("/save_sugar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: sessionStorage.getItem("tg_user_id"),
+            date: today,
+            sugar: value
+          })
+        });
+
+        let statusText = "";
+        if (value < 3.3) {
+          statusText = "🔻 Уровень сахара ниже нормы. Обратитесь к врачу.";
+        } else if (value <= 5.1) {
+          statusText = "✅ Уровень сахара в норме.";
+        } else if (value <= 7.0) {
+          statusText = "ℹ️ Возможен гестационный диабет. Обсудите это с врачом.";
+        } else {
+          statusText = "🔺 Уровень сахара высокий. Срочно обратитесь к врачу.";
+        }
+
+        localStorage.setItem("sugar_status", statusText);
+        statusEl.textContent = statusText;
+
+        checkAndShowStats();
+      }
+
+      async function checkAndShowStats() {
+        const userId = sessionStorage.getItem("tg_user_id");
+        const res = await fetch(`/load_sugar_data?user_id=${userId}`);
+        const data = await res.json();
+        const entries = data.entries || [];
+
+        if (entries.length >= 2) {
+          document.getElementById("statsWrapper").style.display = "block";
+          renderChart(entries);
+        }
+      }
+
+      function renderChart(entries) {
+        const labels = entries.map(e => new Date(e[0]).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" }));
+        const values = entries.map(e => e[1]);
+
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(chartEl, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Сахар (ммоль/л)",
+              data: values,
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: 3,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+          }
+        });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().slice(0, 10);
+        const lastDate = localStorage.getItem("sugar_date");
+        const lastValue = localStorage.getItem("sugar_value");
+        const riskStored = localStorage.getItem("sugar_risk");
+
+        if (riskStored !== null) {
+          showQuestionAnsweredState();
+        }
+
+        if (lastValue && lastDate === today) {
+          inputEl.value = lastValue;
+          inputEl.classList.remove("placeholder");
+
+          const savedStatus = localStorage.getItem("sugar_status");
+          if (savedStatus) {
+            statusEl.textContent = savedStatus;
+          }
+        }
+
+        checkAndShowStats();
+      });
+    </script>
+  </body>
+  </html>

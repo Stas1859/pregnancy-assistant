@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Анализы</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f2f3f5;
+      color: #333;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    h2 {
+      margin-top: 24px;
+      font-size: 20px;
+    }
+
+    .upload-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .submit-btn {
+      margin-top: 12px;
+      background: #2aabee;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .scroll-gallery {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding: 10px 0;
+    }
+
+    .file-preview {
+      min-width: 120px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .file-preview img {
+      width: 100%;
+      border-radius: 8px;
+      max-height: 100px;
+      object-fit: cover;
+    }
+
+    .info-block {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user?.id) {
+        sessionStorage.setItem("tg_user_id", tg.initDataUnsafe.user.id.toString());
+      }
+    })();
+  </script>
+
+  <div style="display: flex; align-items: center; margin-bottom: 12px; position: relative;">
+    <button onclick="goBack()" style="background: none; border: none; font-size: 16px; color: #4f8fba; cursor: pointer; position: absolute; left: 0;">
+      ← Назад
+    </button>
+    <h2 style="margin: 0 auto; text-align: center;">Анализы</h2>
+  </div>
+
+  <div class="upload-block">
+    <input type="file" accept="image/*,.pdf" multiple id="fileInput" />
+    <button class="submit-btn" onclick="uploadFiles()">Загрузить</button>
+    <div class="scroll-gallery" id="gallery"></div>
+  </div>
+
+  <div class="info-block">
+    <h3>🩸 Основные нормы по анализам крови</h3>
+    <ul>
+      <li>Гемоглобин: 120–150 г/л</li>
+      <li>Лейкоциты: 4.0–9.0 ×10⁹/л</li>
+      <li>Тромбоциты: 180–320 ×10⁹/л</li>
+      <li>Глюкоза: 3.3–5.5 ммоль/л</li>
+      <li>Холестерин: &lt;5.2 ммоль/л</li>
+    </ul>
+    <p>Во время беременности возможны индивидуальные отклонения — проконсультируйтесь с врачом.</p>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Информация не является медицинской рекомендацией. Обратитесь к врачу.
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = "/main";
+    }
+
+    function uploadFiles() {
+      const input = document.getElementById("fileInput");
+      const gallery = document.getElementById("gallery");
+
+      for (const file of input.files) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "file-preview";
+
+          if (file.type.startsWith("image")) {
+            wrapper.innerHTML = `<img src="${e.target.result}" alt="анализ" /><div>${file.name}</div>`;
+          } else {
+            wrapper.innerHTML = `<div style="font-size:40px;">📄</div><div>${file.name}</div>`;
+          }
+
+          gallery.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      input.value = ""; // очистка после загрузки
+    }
+  </script>
+</body>
+</html>

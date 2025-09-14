@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Добро пожаловать</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      background: white;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    .emoji {
+      font-size: 96px;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 0.3s;
+    }
+
+    .text {
+      font-size: 20px;
+      color: #333;
+      margin-top: 16px;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 0.8s;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="emoji">🤰</div>
+  <div class="text">Ассистент вашей беременности</div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js?v=2"></script>
+  <!-- After: welcome.html (fetching from DB to decide navigation) -->
+  <script>
+      // Версия скрипта для обновления кэша
+      console.log("🔧 Загружен скрипт welcome.html v2.0");
+      console.log("🌐 Telegram WebApp доступен:", !!window.Telegram?.WebApp);
+      
+      const tg = window.Telegram?.WebApp;
+      const user = tg?.initDataUnsafe?.user;
+      let uid = null;
+      
+      console.log("👤 Пользователь Telegram:", user);
+      
+      // Проверяем, запущено ли приложение в Telegram
+      if (!user?.id) {
+          // Режим разработки - используем тестовый ID
+          uid = "test_user_12345";
+          const username = "test_user";
+          sessionStorage.setItem("tg_user_id", uid);
+          sessionStorage.setItem("tg_username", username);
+          sessionStorage.setItem("dev_mode", "true");
+          
+          // Регистрируем тестового пользователя
+          console.log("🔄 Регистрируем тестового пользователя...");
+          fetch("/register_user", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: uid, username })
+          }).then(res => {
+              console.log("✅ Пользователь зарегистрирован:", res.status);
+          }).catch(e => {
+              console.error("❌ Ошибка регистрации:", e);
+          });
+          
+          console.log("🔧 Режим разработки: используется тестовый пользователь", uid);
+      } else {
+          // Обычный режим Telegram
+          uid = user.id.toString();
+          const username = user.username || "";
+          sessionStorage.setItem("tg_user_id", uid);
+          sessionStorage.setItem("tg_username", username);
+          sessionStorage.setItem("dev_mode", "false");
+          
+          fetch("/register_user", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: uid, username })
+          });
+      }
+
+      // ⏳ After 2 seconds, determine next page via DB query
+      setTimeout(async () => {
+          console.log("🔧 Таймер сработал, uid:", uid);
+          if (!uid) {
+              console.log("❌ UID не найден, переходим на /choose");
+              window.location.href = "/choose";
+              return;
+          }
+          
+          try {
+              console.log("🔄 Загружаем данные пользователя...");
+              const res = await fetch(`/load_user_data?user_id=${uid}`);
+              console.log("📡 Ответ сервера:", res.status);
+              
+              if (!res.ok) {
+                  throw new Error(`HTTP ${res.status}`);
+              }
+              
+              const data = await res.json();
+              console.log("📊 Данные пользователя:", data);
+              
+              if (data.start_date) {
+                  console.log("✅ Дата беременности найдена, переходим на /main");
+                  window.location.href = "/main";
+              } else {
+                  console.log("📅 Дата беременности не найдена, переходим на /choose");
+                  window.location.href = "/choose";
+              }
+          } catch (e) {
+              console.error("❌ Ошибка загрузки данных:", e);
+              console.log("🔄 Переходим на /choose из-за ошибки");
+              window.location.href = "/choose";
+          }
+      }, 2000);
+  </script>
+</body>
+</html>

@@ -86,6 +86,10 @@ def validate_weeks(weeks):
 def welcome():
     return render_template("welcome.html")
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "message": "Flask app is running"})
+
 @app.route("/webhook", methods=["POST"])
 def telegram_webhook():
     """Обработчик webhook от Telegram"""

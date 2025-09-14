@@ -949,7 +949,37 @@ def init_tables():
 # Вызов при запуске
 init_tables()
 
+def setup_telegram_webhook():
+    """Автоматическая настройка webhook при запуске"""
+    try:
+        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        webhook_url = os.environ.get('WEBHOOK_URL')
+        
+        if bot_token and webhook_url:
+            print("🤖 Настройка Telegram webhook...")
+            
+            # Устанавливаем webhook
+            url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
+            data = {'url': webhook_url}
+            
+            import requests
+            response = requests.post(url, data=data)
+            result = response.json()
+            
+            if result.get('ok'):
+                print("✅ Webhook успешно настроен!")
+            else:
+                print(f"❌ Ошибка настройки webhook: {result}")
+        else:
+            print("⚠️ Переменные окружения TELEGRAM_BOT_TOKEN или WEBHOOK_URL не настроены")
+    except Exception as e:
+        print(f"❌ Ошибка при настройке webhook: {e}")
+
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8080))
+    
+    # Настраиваем webhook автоматически
+    setup_telegram_webhook()
+    
     app.run(host="0.0.0.0", port=port, debug=False)
